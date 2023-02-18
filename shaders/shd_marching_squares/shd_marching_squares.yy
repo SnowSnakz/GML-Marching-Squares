@@ -1,7 +1,7 @@
 {
   "resourceType": "GMShader",
   "resourceVersion": "1.0",
-  "name": "shd_viewpos",
+  "name": "shd_marching_squares",
   "parent": {
     "name": "Shaders",
     "path": "folders/Shaders.yy",

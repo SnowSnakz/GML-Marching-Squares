@@ -16,7 +16,7 @@ global.__ms_edge_table = [
 	[0, -1],
 	[3, 1],
 	[2, 1],
-	[1, -1],
+	[2, 0],
 	[5, 1],
 	[2, -1],
 	[4, 1]
@@ -42,7 +42,7 @@ global.__ms_triangle_table = [
 	[0, 1, 2],
 	[1, 3, 4],
 	[0, 3, 2, 3, 4, 2],
-	[1, 5, 6],
+	[2, 5, 6],
 	[0, 1, 6, 6, 1, 5],
 	[6, 2, 5, 1, 3, 4, -2, 1, 5, -1, 4, 5],
 	[0, 3, 7, 0, 7, 6, 3, 4, 7, 6, 7, 5],
@@ -61,7 +61,7 @@ function __ms_get_index(quad, iso_level) {
 	var average = 0;
 		
 	var d;
-	for(var i = 0; i < 3; i++)
+	for(var i = 0; i < 4; i++)
 	{
 		d = quad[i];
 		average += d;
@@ -78,10 +78,10 @@ function __ms_get_index(quad, iso_level) {
 
 function __ms_get_blend(iso_level, v1, v2, blend)
 {
-	if(sign(blend) == -1)
+	if(blend <= 0)
 		return abs(blend);
 	
-	return (iso_level - (v1 + v2) / 2) * blend;
+	return clamp((abs(v1 - iso_level) + (1 - abs(v2 - iso_level))) / 2, 0, 1);
 }
 
 function __ms_gen_vertex(iso_level, side, blend, x1, y1, x2, y2, density_quad)
@@ -136,12 +136,14 @@ function __ms_gen_triangles(iso_level, index, winding_order, x1, y1, x2, y2, den
 	for(var i = 0; i < l; i += 3)
 	{
 		var a, b, c;
-		a = triangle_lookup[0];
-		b = triangle_lookup[1];
-		c = triangle_lookup[2];
+		a = triangle_lookup[i + 0];
+		b = triangle_lookup[i + 1];
+		c = triangle_lookup[i + 2];
 		
 		if(sign(a) == -1)
 		{
+			a = abs(a);
+			
 			if((index & 16) == 0)
 				continue;
 		}
@@ -158,10 +160,7 @@ function __ms_gen_triangles(iso_level, index, winding_order, x1, y1, x2, y2, den
 		
 		for(var j = 0; j < 3; j++)
 		{
-			for(var k = 0; k < 2; k++)
-			{
-				array_push(result, tri[j][k]);
-			}
+			array_push(result, tri[j]);
 		}
 	}
 	

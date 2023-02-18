@@ -33,7 +33,7 @@
   },
   "resources": [
     {"id":{"name":"obj_MarchingSquaresTest","path":"objects/obj_MarchingSquaresTest/obj_MarchingSquaresTest.yy",},"order":0,},
-    {"id":{"name":"shd_viewpos","path":"shaders/shd_viewpos/shd_viewpos.yy",},"order":0,},
+    {"id":{"name":"shd_marching_squares","path":"shaders/shd_marching_squares/shd_marching_squares.yy",},"order":0,},
     {"id":{"name":"woof_MarchingSquares","path":"scripts/woof_MarchingSquares/woof_MarchingSquares.yy",},"order":0,},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},"order":0,},
   ],
