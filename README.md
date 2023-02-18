@@ -8,7 +8,7 @@ Marching Cubes has more uses outside of the medical field though, a really commo
 
 A typical video game terrain would use something called a heightmap which is a list of values denoting the height of the terrain at a specific value.
 
-While heightmap terrains are incredibly useful and generally OK, they have one big caveot. Caves, Overhangs and 90degree angles (cliffs) are impossible to with that setup.
+While heightmap terrains are incredibly useful and generally OK, they have one big caveot. Caves, Overhangs and 90degree angles (cliffs) are impossible to do with that setup.
 
 Marching Cubes provides a solution to that problem, instead of a 2D grid of height values, we have a 3D grid of density values. Marching Cubes will generate a water-tight mesh encompassing all of the areas where the density is above or below a certain threshold (the isovalue.)
 
