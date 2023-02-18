@@ -22,6 +22,16 @@ global.__ms_edge_table = [
 	[4, 1]
 ];
 
+// Which 2 vertices on the quad to sample density for a given side.
+global.__ms_side_table = [
+	[0, 1],
+	[0, 2],
+	[2, 3],
+	[1, 3],
+	[2, 1],
+	[0, 3]
+];
+
 // A group of 3 represent a triangle, these are indices into the edgeTable.
 // Vertices are defined clock-wise here.
 //
@@ -46,41 +56,78 @@ global.__ms_triangle_table = [
 	[0, 3, 6, 6, 3, 8]
 ];
 
-// Any variable names included in this list will be interpolated when smoothing two vertices.
-// All other variables will be copied from the closest source vertex.
-global.__ms_interpolators = [
-	"x", "y", "z", "w", "r", "g", "b", "a",
-	"red", "green", "blue", "alpha",
-	"color", "texcoord", "position", "normal",
-	"col", "tex", "pos", "norm"
-];
-
-function __ms_get_index(quad, isoLevel) {
+function __ms_get_index(quad, iso_level) {
 	var index = 0;
 	var average = 0;
 		
 	var d;
 	for(var i = 0; i < 3; i++)
 	{
-		d = quad[i].density;
+		d = quad[i];
 		average += d;
-		if(d > isoLevel)
+		if(d > iso_level)
 			index |= (1 << i);
 	}
 		
 	average /= 4;
-	if(average > isoLevel) // Used for disambiguation of cases #6 and #9.
+	if(average > iso_level) // Used for disambiguation of cases #6 and #9.
 		index |= 16; // (1 << 4);
 		
 	return index;
 }
 
-function __ms_gen_triangle(x1, y1, x2, y2, a, b, c)
+function __ms_get_blend(iso_level, v1, v2, blend)
 {
+	if(sign(blend) == -1)
+		return abs(blend);
 	
+	return (iso_level - (v1 + v2) / 2) * blend;
 }
 
-function __ms_gen_triangles(index, winding_order, x1, y1, x2, y2) {
+function __ms_gen_vertex(iso_level, side, blend, x1, y1, x2, y2, density_quad)
+{
+	var blend_sides = global.__ms_side_table[side];
+	blend = __ms_get_blend(iso_level, density_quad[blend_sides[0]], density_quad[blend_sides[1]], blend);
+	
+	switch(side)
+	{
+		default:
+			return [0.5, 0.5];
+		
+		case 0: // Top
+			return [lerp(x1, x2, blend), y1];
+				
+		case 1: // Left
+			return [x1, lerp(y1, y2, blend)];
+				
+		case 2: // Bottom
+			return [lerp(x1, x2, blend), y2];
+				
+		case 3: // Right
+			return [x2, lerp(y1, y2, blend)];
+				
+		case 4: // Forward Diagonal
+			return [lerp(x1, x2, blend), lerp(y2, y1, blend)];
+				
+		case 5: // Backward Diagonal
+			return [lerp(x1, x2, blend), lerp(y1, y2, blend)];
+	}
+}
+
+function __ms_gen_triangle(iso_level, x1, y1, x2, y2, a, b, c, density_quad)
+{
+	var al = global.__ms_edge_table[a];
+	var bl = global.__ms_edge_table[b];
+	var cl = global.__ms_edge_table[c];
+	
+	return [
+		__ms_gen_vertex(iso_level, al[0], al[1], x1, y1, x2, y2, density_quad),
+		__ms_gen_vertex(iso_level, bl[0], bl[1], x1, y1, x2, y2, density_quad),
+		__ms_gen_vertex(iso_level, cl[0], cl[1], x1, y1, x2, y2, density_quad)
+	];
+}
+
+function __ms_gen_triangles(iso_level, index, winding_order, x1, y1, x2, y2, density_quad) {
 	var result = [];
 	
 	var triangle_lookup = global.__ms_triangle_table[index & 15];
@@ -102,14 +149,83 @@ function __ms_gen_triangles(index, winding_order, x1, y1, x2, y2) {
 		var tri;
 		if(winding_order)
 		{
-			tri = __ms_gen_triangle(x1, y1, x2, y2, a, b, c);
+			tri = __ms_gen_triangle(iso_level, x1, y1, x2, y2, a, b, c, density_quad);
 		}
 		else
 		{
-			tri = __ms_gen_triangle(x1, y1, x2, y2, c, b, a);
+			tri = __ms_gen_triangle(iso_level, x1, y1, x2, y2, c, b, a, density_quad);
 		}
 		
-		array_push(result, tri);
+		for(var j = 0; j < 3; j++)
+		{
+			for(var k = 0; k < 2; k++)
+			{
+				array_push(result, tri[j][k]);
+			}
+		}
+	}
+	
+	return result;
+}
+
+global.__ms_grid_sampler_method = "get"; // name of a the method on the grid which takes two arguments (x, y)
+
+// Returns an array containing all of the vertices for each triangle (each set of 3 vertices is a triangle)
+function marching_squares(iso_level, is_clockwise, grid, width, height, scale_x, scale_y) {
+	var is_dsgrid = is_real(grid) && ds_exists(grid, ds_type_grid);
+	var is_class = is_struct(grid);
+	
+	if(!is_dsgrid && !is_class)
+	{
+		show_debug_message("Unable to sample grid of unknown type.");
+		return [];
+	}
+	
+	var sampler_method;
+	if(is_class)
+	{
+		sampler_method = grid[$ global.__ms_grid_sampler_method];
+		
+		if(!is_method(sampler_method))
+		{
+			show_debug_message("Unable to find sampler method on grid.");
+			return [];
+		}
+	}
+	
+	var result = [];
+	
+	for(var yy = 0; yy < height; yy++) {
+		for(var xx = 0; xx < width; xx++) {
+			var quad;
+			
+			if(is_dsgrid)
+			{
+				quad = [
+					grid[# xx, yy],
+					grid[# xx + 1, yy],
+					grid[# xx, yy + 1],
+					grid[# xx + 1, yy + 1]
+				];
+			}
+			else
+			{
+				quad = [
+					sampler_method(xx, yy),
+					sampler_method(xx + 1, yy),
+					sampler_method(xx, yy + 1),
+					sampler_method(xx + 1, yy + 1)
+				];
+			}
+			
+			var index = __ms_get_index(quad, iso_level);
+			
+			var triangles = __ms_gen_triangles(iso_level, index, is_clockwise, xx * scale_x, yy * scale_y, (xx + 1) * scale_x, (yy + 1) * scale_y, quad);
+			for(var i = 0; i < array_length(triangles); i++)
+			{
+				array_push(result, triangles[i]);
+			}
+		}
 	}
 	
 	return result;
