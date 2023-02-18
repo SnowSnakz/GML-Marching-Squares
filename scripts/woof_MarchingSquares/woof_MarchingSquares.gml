@@ -167,55 +167,23 @@ function __ms_gen_triangles(iso_level, index, winding_order, x1, y1, x2, y2, den
 	return result;
 }
 
-global.__ms_grid_sampler_method = "get"; // name of a the method on the grid which takes two arguments (x, y)
-
 // Returns an array containing all of the vertices for each triangle (each set of 3 vertices is a triangle)
-function marching_squares(iso_level, is_clockwise, grid, width, height, scale_x, scale_y) {
-	var is_dsgrid = is_real(grid) && ds_exists(grid, ds_type_grid);
-	var is_class = is_struct(grid);
-	
-	if(!is_dsgrid && !is_class)
-	{
-		show_debug_message("Unable to sample grid of unknown type.");
-		return [];
-	}
-	
-	var sampler_method;
-	if(is_class)
-	{
-		sampler_method = grid[$ global.__ms_grid_sampler_method];
-		
-		if(!is_method(sampler_method))
-		{
-			show_debug_message("Unable to find sampler method on grid.");
-			return [];
-		}
-	}
-	
+function marching_squares(iso_level, is_clockwise, grid, scale_x, scale_y) {
 	var result = [];
+	
+	var width = ds_grid_width(grid) - 1;
+	var height = ds_grid_height(grid) - 1;
 	
 	for(var yy = 0; yy < height; yy++) {
 		for(var xx = 0; xx < width; xx++) {
 			var quad;
 			
-			if(is_dsgrid)
-			{
-				quad = [
-					grid[# xx, yy],
-					grid[# xx + 1, yy],
-					grid[# xx, yy + 1],
-					grid[# xx + 1, yy + 1]
-				];
-			}
-			else
-			{
-				quad = [
-					sampler_method(xx, yy),
-					sampler_method(xx + 1, yy),
-					sampler_method(xx, yy + 1),
-					sampler_method(xx + 1, yy + 1)
-				];
-			}
+			quad = [
+				grid[# xx, yy],
+				grid[# xx + 1, yy],
+				grid[# xx, yy + 1],
+				grid[# xx + 1, yy + 1]
+			];
 			
 			var index = __ms_get_index(quad, iso_level);
 			

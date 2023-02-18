@@ -1,13 +1,13 @@
 {
   "resourceType": "GMRoom",
   "resourceVersion": "1.0",
-  "name": "Room1",
+  "name": "rm_MarchingSquaresTest",
   "creationCodeFile": "",
   "inheritCode": false,
   "inheritCreationOrder": false,
   "inheritLayers": false,
   "instanceCreationOrder": [
-    {"name":"inst_57346D5","path":"rooms/Room1/Room1.yy",},
+    {"name":"inst_57346D5","path":"rooms/rm_MarchingSquaresTest/rm_MarchingSquaresTest.yy",},
   ],
   "isDnd": false,
   "layers": [
@@ -18,7 +18,7 @@
   ],
   "parent": {
     "name": "Rooms",
-    "path": "folders/Rooms.yy",
+    "path": "folders/GML Marching Squares/Rooms.yy",
   },
   "parentRoom": null,
   "physicsSettings": {

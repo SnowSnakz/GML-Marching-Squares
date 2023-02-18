@@ -1,0 +1,18 @@
+Marching Squares is a polygonization algorithm which takes in a 2D grid of density points and
+generates a mesh encompassing the area where the density is above a certain threshold.
+
+In order to use this algorithm, you must call the function below.
+
+marching_squares(iso_level, is_clockwise, grid, scale_x, scale_y)
+
+The iso_level is the boundry between air and solid.
+For grids with a density range of -1 to 1, a value of 0 is recommended.
+For grids with a density range of 0 to 1, a value of 0.5 is recommended.
+
+is_clockwise is a boolean that determines the order in which vertices are generated.
+If is_clockwise is true, vertices are generated clockwise, otherwise they are generated counter clock-wise.
+This is useful when implementing backface culling.
+
+grid should be a DS Grid containing the density values.
+
+scale_x and scale_y should be the size of each cell in object space (pixels if you don't apply transformations.)

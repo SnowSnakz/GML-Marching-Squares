@@ -9,7 +9,7 @@ for(var i = 0; i < 16; i++)
 		var yy = abs(j - 8);
 		
 		// Procudes a circle by calculate the distance from (i, j) to (8, 8)
-		grid_test[# i, j] = 1 - (sqrt(xx*xx + yy*yy) / 8);
+		grid_test[# i, j] = clamp(1 - (sqrt(xx*xx + yy*yy) / 8), -1, 1);
 	}
 }
 
@@ -25,7 +25,7 @@ vbuf = noone;
 regenerate_mesh = function()
 {
 	// Calculate the result.
-	var triangles = marching_squares(0, false, grid_test, 15, 15, 16, 16);
+	var triangles = marching_squares(0, true, grid_test, 16, 16);
 
 	// Store the result in a vertex buffer.
 	if(vbuf == noone) {

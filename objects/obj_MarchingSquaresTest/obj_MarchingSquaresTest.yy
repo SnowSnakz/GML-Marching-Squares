@@ -12,7 +12,7 @@
   "overriddenProperties": [],
   "parent": {
     "name": "Objects",
-    "path": "folders/Objects.yy",
+    "path": "folders/GML Marching Squares/Objects.yy",
   },
   "parentObjectId": null,
   "persistent": false,
